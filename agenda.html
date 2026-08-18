@@ -217,6 +217,55 @@
             display: none !important;
         }
 
+        /* --- ESTILOS PARA LA VISTA SEMANAL VERTICAL (listWeek) --- */
+        .fc-theme-standard .fc-list {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .fc-list-day-cushion {
+            background-color: #f1f5f9 !important;
+            padding: 9px 14px !important;
+            cursor: pointer;
+            font-weight: 600 !important;
+            color: #0056b3 !important;
+            text-transform: capitalize;
+        }
+
+        .fc-list-day-cushion:hover {
+            background-color: #e2e8f0 !important;
+        }
+
+        .fc-list-event {
+            cursor: pointer !important;
+            transition: background-color 0.15s ease;
+        }
+
+        .fc-list-event:hover td {
+            background-color: #f8fafc !important;
+        }
+
+        .fc-list-event-dot {
+            border-width: 6px !important;
+        }
+
+        .fc-list-event-time {
+            font-weight: 600;
+            color: #475569;
+        }
+
+        .fc-list-event-title {
+            font-weight: 500;
+            color: #1e293b;
+        }
+
+        .fc-list-empty {
+            padding: 2rem 1rem !important;
+            color: #64748b;
+            font-style: italic;
+        }
+
         /* --- ESTILOS PARA PANTALLAS GRANDES (Desktop) --- */
         @media (min-width: 768px) {
             body {
@@ -516,7 +565,7 @@
                 headerToolbar: {
                     left: 'prev,today,next',
                     center: 'title',
-                    right: 'multiMonthYear,dayGridMonth,dayGridWeek'
+                    right: 'multiMonthYear,dayGridMonth,listWeek'
                 },
 
                 locale: 'es',
@@ -529,8 +578,9 @@
 
                 views: {
                     dayGridMonth: {},
-                    dayGridWeek: {
-                        dayHeaderFormat: { weekday: 'short', day: 'numeric' }
+                    listWeek: {
+                        buttonText: 'Semana',
+                        dayHeaderFormat: { weekday: 'long', day: 'numeric', month: 'long' }
                     },
                     multiMonthYear: {
                         dayMaxEvents: false,
@@ -540,10 +590,11 @@
 
                 buttonText: {
                     today: 'Hoy',
+                    year: 'Año',
                     month: 'Mes',
                     week: 'Semana',
-                    year: 'Año',
-                    list: 'Lista'
+                    list: 'Semana',
+                    listWeek: 'Semana'
                 },
 
                 events: [], // Los eventos se cargan en tiempo real desde Firebase
@@ -627,6 +678,17 @@
             window.addEventListener('resize', updateStickyHeaderOffsets);
             calendar.render();
             updateStickyHeaderOffsets();
+
+            // Permitir hacer clic en las cabeceras de día de la vista semanal vertical para añadir cita
+            calendarEl.addEventListener('click', function (e) {
+                const listDayCushion = e.target.closest('.fc-list-day-cushion');
+                if (listDayCushion) {
+                    const listDayRow = listDayCushion.closest('.fc-list-day');
+                    if (listDayRow && listDayRow.dataset.date) {
+                        openModal(listDayRow.dataset.date);
+                    }
+                }
+            });
 
             // --- LÓGICA DE SINCRONIZACIÓN CON FIREBASE ---
 
