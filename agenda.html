@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agenda de Citas Médicas</title>
+
+    <!-- Estilos para la página -->
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 1rem;
+            /* Reducido para móviles */
+            background-color: #f8f9fa;
+            color: #333;
+        }
+
+        #calendar-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 1rem;
+            /* Reducido para móviles */
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .main-nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background-color: #f8f9fa;
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            padding: 0.25rem 0;
+            margin-bottom: 0.25rem;
+        }
+
+        .main-nav button {
+            padding: 6px 14px;
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #calendar-container h1 {
+            position: sticky;
+            top: var(--nav-height, 42px);
+            z-index: 99;
+            background-color: white;
+            text-align: center;
+            color: #0056b3;
+            font-size: 1.35rem;
+            margin: 0;
+            padding: 0.35rem 0 0.75rem 0;
+        }
+
+        .fc .fc-header-toolbar {
+            position: sticky;
+            top: var(--toolbar-top, 85px);
+            z-index: 98;
+            background-color: white;
+            padding: 0.5rem 0;
+            margin-bottom: 0.5rem !important;
+        }
+
+        /* Personalización de los botones de FullCalendar */
+        .fc-button-primary {
+            background-color: #007bff !important;
+            border-color: #007bff !important;
+        }
+
+        .fc-button-primary:hover {
+            background-color: #0056b3 !important;
+        }
+
+        .fc-event {
+            cursor: pointer;
+        }
+
+        /* Estilos para los números de los días en negrita */
+        .fc-daygrid-day-number {
+            font-weight: bold !important;
+        }
+
+        /* Aumentar el tamaño de los números en las vistas mensual y anual */
+        .fc-dayGridMonth-view .fc-daygrid-day-number,
+        .fc-multiMonthYear-view .fc-daygrid-day-number {
+            font-size: 1.15em;
+            font-weight: bold !important;
+            /* Aumenta el tamaño del número */
+        }
+
+        /* --- ESTILOS PARA PANTALLAS GRANDES (Desktop) --- */
+        @media (min-width: 768px) {
+            body {
+                padding: 1rem 2rem;
+            }
+
+            #calendar-container {
+                padding: 1rem 1.5rem;
+            }
+
+            #calendar-container h1 {
+                font-size: 1.5rem;
+            }
+        }
+
+        /* --- ESTILOS PARA LA VENTANA MODAL --- */
+        .modal {
+            display: none;
+            /* Centrado vertical con Flexbox */
+            align-items: center;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.6);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 1rem auto;
+            /* Margen para móviles */
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 8px;
+            position: relative;
+        }
+
+        @media (min-width: 768px) {
+            .modal-content {
+                margin: 10% auto;
+                /* Margen original para desktop */
+            }
+        }
+
+        .close-button {
+            color: #aaa;
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .modal-content form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .modal-content label {
+            font-weight: bold;
+        }
+
+        .modal-content input[type="text"],
+        .modal-content input[type="time"],
+        .modal-content textarea {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+
+        .modal-content button {
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .modal-content button:hover {
+            background-color: #0056b3;
+        }
+
+        #delete-button {
+            background-color: #dc3545;
+        }
+
+        #delete-button:hover {
+            background-color: #c82333;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* --- ESTILOS PARA LA VISTA DE PACIENTES --- */
+        #patients-view {
+            display: none;
+            /* Oculto por defecto */
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        #patient-list li {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+
+        #patient-list .patient-actions {
+            margin-left: auto;
+            display: flex;
+            gap: 8px;
+        }
+
+        #patient-list .patient-actions button {
+            padding: 4px 8px;
+            font-size: 12px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+    </style>
+
+    <!-- Carga de la librería FullCalendar -->
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
+</head>
+
+<body>
+
+    <div class="main-nav">
+        <button id="show-calendar-btn">Agenda</button>
+        <button id="show-patients-btn">Pacientes</button>
+    </div>
+
+    <div id="calendar-view">
+        <div id="calendar-container">
+            <h1>Agenda de Citas Médicas</h1>
+            <!-- El calendario se renderizará aquí -->
+            <div id="calendar"></div>
+        </div>
+    </div>
+
+    <div id="patients-view">
+        <h1>Gestión de Pacientes</h1>
+        <form id="patient-form">
+            <h3 id="patient-form-title">Añadir Nuevo Paciente</h3>
+            <input type="hidden" id="patient-id-edit">
+            <label for="patient-name">Nombre del Paciente:</label>
+            <input type="text" id="patient-name" required>
+            <label for="patient-color">Color Predeterminado:</label>
+            <input type="color" id="patient-color" value="#3788d8">
+            <div class="modal-buttons">
+                <button type="submit">Guardar</button>
+                <button type="button" id="cancel-patient-edit" style="display: none;">Cancelar</button>
+            </div>
+        </form>
+        <hr>
+        <h3>Lista de Pacientes</h3>
+        <ul id="patient-list"></ul>
+    </div>
+
+    <!-- Modal para añadir nueva cita -->
+    <div id="event-modal" class="modal">
+        <div class="modal-content">
+            <span id="close-button" class="close-button">&times;</span>
+            <h2 id="modal-title">Añadir Nueva Cita</h2>
+            <form id="event-form">
+                <input type="hidden" id="event-id">
+                <input type="hidden" id="event-date">
+
+                <label for="event-patient-select">Paciente:</label>
+                <select id="event-patient-select" required></select>
+
+                <label for="event-start-time">Hora de Inicio:</label>
+                <input type="time" id="event-start-time" required>
+
+                <label for="event-color">Color:</label>
+                <input type="color" id="event-color" value="#3788d8">
+
+                <label for="event-notes">Notas:</label>
+                <textarea id="event-notes" rows="3"></textarea>
+
+                <div class="modal-buttons">
+                    <button type="submit">Guardar Cambios</button>
+                    <button type="button" id="delete-button">Eliminar Cita</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Esperamos a que todo el contenido del HTML esté cargado
+        document.addEventListener('DOMContentLoaded', function () {
+            const calendarEl = document.getElementById('calendar');
+            const PATIENTS_STORAGE_KEY = 'medicalAgendaPatients';
+            let patients = [];
+
+            // --- LÓGICA DE NAVEGACIÓN ---
+            setupNavigation();
+
+            // Detectamos si la pantalla es pequeña (móvil)
+            const isMobile = window.innerWidth < 768;
+
+            // Inicializamos el objeto FullCalendar
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                // --- PLUGINS Y VISTAS ---
+                // Cambiamos la vista y la barra de herramientas según el dispositivo
+                initialView: isMobile ? 'dayGridWeek' : 'dayGridMonth', // Vista semanal en móvil, mensual en desktop
+                headerToolbar: isMobile
+                    ? { // Barra de herramientas para móvil (más compacta)
+                        left: 'prev,next',
+                        center: 'title',
+                        right: 'multiMonthYear,dayGridMonth,dayGridWeek'
+                    } : { // Barra de herramientas para desktop
+                        left: 'prev,next today',
+                        center: 'title',
+                        right: 'multiMonthYear,dayGridMonth,dayGridWeek'
+                    },
+
+                // --- CONFIGURACIÓN GENERAL ---
+                locale: 'es', // Poner el calendario en español
+                initialDate: new Date(), // Asegura que el calendario se inicie en la fecha actual
+                height: 'auto', // Ajusta la altura automáticamente
+                forceEventDuration: true, // Asegura que los eventos tengan una duración
+                defaultTimedEventDuration: '00:30', // Duración por defecto de 30 minutos
+                navLinks: true, // Permite hacer clic en los días/semanas para navegar
+                editable: true, // Permite mover y redimensionar citas (arrastrando)
+
+                // --- VISTAS ESPECÍFICAS ---
+                views: {
+                    dayGridMonth: {
+                        // En la vista mensual, queremos ver los bloques de color pero sin texto.
+                    }
+                },
+
+                // --- TEXTOS EN ESPAÑOL ---
+                buttonText: {
+                    today: 'Hoy',
+                    month: 'Mes',
+                    week: 'Semana',
+                    year: 'Año',
+                    list: 'Lista'
+                },
+
+                // --- EVENTOS (CITAS) ---
+                // Aquí puedes poner tus citas. En un proyecto real, vendrían de una base de datos.
+                events: [
+                    {
+                        id: '1',
+                        title: 'Cita: Juan Pérez (Cardiología)',
+                        start: new Date().toISOString().slice(0, 10) + 'T10:00:00', // Hoy a las 10:00
+                        end: new Date().toISOString().slice(0, 10) + 'T10:30:00',
+                        backgroundColor: '#007bff',
+                        borderColor: '#007bff',
+                        extendedProps: { notes: 'Paciente refiere dolor en el pecho.' }
+                    },
+                    {
+                        id: '2',
+                        title: 'Cita: María Gómez (Dermatología)',
+                        start: new Date(new Date().setDate(new Date().getDate() + 2)).toISOString().slice(0, 10) + 'T12:00:00',
+                        backgroundColor: '#28a745',
+                        borderColor: '#28a745',
+                        extendedProps: { notes: 'Revisión de lunar en la espalda.' }
+                    },
+                    {
+                        id: '3',
+                        title: 'Revisión: Carlos Ruiz',
+                        start: new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().slice(0, 10) + 'T16:30:00',
+                        backgroundColor: '#dc3545',
+                        borderColor: '#dc3545',
+                        extendedProps: { notes: '' }
+                    },
+                    {
+                        id: '4',
+                        title: 'Vacunación: Ana Torres',
+                        start: new Date(new Date().setDate(new Date().getDate() + 5)).toISOString().slice(0, 10) + 'T09:00:00',
+                        backgroundColor: '#ffc107',
+                        borderColor: '#ffc107',
+                        extendedProps: { notes: 'Segunda dosis COVID-19.' }
+                    }
+                ],
+
+                // --- HOOKS DE RENDERIZADO ---
+                eventDidMount: function (info) {
+                    // Si estamos en la vista mensual, eliminamos el texto del evento.
+                    if (info.view.type === 'dayGridMonth') {
+                        const eventTitleEl = info.el.querySelector('.fc-event-title');
+                        if (eventTitleEl) {
+                            eventTitleEl.remove();
+                        }
+                    }
+                },
+
+                // --- INTERACTIVIDAD ---
+                // Se ejecuta al hacer clic en una cita
+                eventClick: function (info) {
+                    // Al hacer clic en un evento, abrimos el modal en modo edición
+                    openModal(null, info.event);
+                },
+
+                // Se ejecuta al hacer clic en un día vacío
+                dateClick: function (info) {
+                    // Al hacer clic en una fecha, abrimos el modal
+                    openModal(info.dateStr);
+                },
+
+                // Se ejecuta cuando la vista o el rango de fechas cambia
+                datesSet: function (dateInfo) {
+                    updateStickyHeaderOffsets();
+                    // Si la nueva vista es la anual, hacemos scroll al mes actual
+                    if (dateInfo.view.type === 'multiMonthYear') {
+                        const today = new Date();
+                        // Buscamos el elemento del DOM que corresponde al mes actual
+                        const currentMonthEl = calendarEl.querySelector(`.fc-multimonth-month[data-date^="${today.toISOString().slice(0, 7)}"]`);
+                        if (currentMonthEl) {
+                            currentMonthEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    }
+                }
+            });
+
+            // Función para calcular las alturas dinámicamente y asegurar que el header quede perfectamente fijado arriba
+            function updateStickyHeaderOffsets() {
+                const mainNav = document.querySelector('.main-nav');
+                const calendarH1 = document.querySelector('#calendar-container h1');
+                if (mainNav) {
+                    const navHeight = mainNav.offsetHeight;
+                    document.documentElement.style.setProperty('--nav-height', `${navHeight}px`);
+                    if (calendarH1) {
+                        const h1Height = calendarH1.offsetHeight;
+                        document.documentElement.style.setProperty('--toolbar-top', `${navHeight + h1Height}px`);
+                    }
+                }
+            }
+
+            window.addEventListener('resize', updateStickyHeaderOffsets);
+
+            // Renderiza el calendario en la pantalla
+            calendar.render();
+            updateStickyHeaderOffsets();
+
+            // --- LÓGICA DE LA VENTANA MODAL ---
+            const modal = document.getElementById('event-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const closeModalButton = document.getElementById('close-button');
+            const eventForm = document.getElementById('event-form');
+            const eventIdInput = document.getElementById('event-id');
+            const eventDateInput = document.getElementById('event-date');
+            const deleteButton = document.getElementById('delete-button');
+            const patientSelect = document.getElementById('event-patient-select');
+
+            // Función para formatear la hora en HH:MM
+            const formatTime = (date) => date ? new Date(date).toTimeString().slice(0, 5) : '';
+
+            function openModal(date, event = null) {
+                eventForm.reset(); // Limpiamos el formulario
+
+                populatePatientSelect();
+
+                if (event) { // Modo Edición
+                    modalTitle.innerText = 'Editar Cita';
+                    eventIdInput.value = event.id;
+                    // Seleccionamos el paciente en el dropdown
+                    patientSelect.value = event.extendedProps.patientId || '';
+                    eventDateInput.value = event.start.toISOString().slice(0, 10);
+                    document.getElementById('event-start-time').value = formatTime(event.start);
+                    document.getElementById('event-color').value = event.backgroundColor;
+                    document.getElementById('event-notes').value = event.extendedProps.notes || '';
+                    deleteButton.style.display = 'block';
+                } else { // Modo Creación
+                    modalTitle.innerText = 'Añadir Nueva Cita';
+                    eventIdInput.value = '';
+                    eventDateInput.value = date; // Guardamos la fecha seleccionada
+                    document.getElementById('event-start-time').value = '10:00';
+                    updateColorFromPatient(); // Asigna el color del primer paciente
+                    document.getElementById('event-notes').value = '';
+                    deleteButton.style.display = 'none';
+                }
+
+                modal.style.display = 'block';
+                if (patientSelect) patientSelect.focus();
+            }
+
+            function closeModal() {
+                modal.style.display = 'none';
+            }
+
+            closeModalButton.onclick = closeModal;
+            window.onclick = function (event) {
+                if (event.target == modal) {
+                    closeModal();
+                }
+            };
+
+            deleteButton.onclick = function () {
+                const eventId = eventIdInput.value;
+                if (eventId && confirm('¿Estás seguro de que quieres eliminar esta cita?')) {
+                    const eventToRemove = calendar.getEventById(eventId);
+                    if (eventToRemove) {
+                        eventToRemove.remove();
+                    }
+                    closeModal();
+                }
+            };
+
+            eventForm.addEventListener('submit', function (e) {
+                e.preventDefault(); // Evitamos que la página se recargue
+
+                const selectedPatientId = patientSelect.value;
+                const patient = patients.find(p => p.id === selectedPatientId);
+                if (!patient) {
+                    alert('Por favor, selecciona un paciente válido.');
+                    return;
+                }
+
+                const title = patient.name;
+                const date = eventDateInput.value;
+                const startTime = document.getElementById('event-start-time').value;
+                const color = document.getElementById('event-color').value;
+                const notes = document.getElementById('event-notes').value;
+
+                const eventId = eventIdInput.value;
+                const eventData = {
+                    title: title,
+                    start: `${date}T${startTime}`,
+                    backgroundColor: color,
+                    borderColor: color,
+                    extendedProps: {
+                        notes: notes,
+                        patientId: selectedPatientId
+                    }
+                };
+
+                if (eventId) { // Estamos editando
+                    const existingEvent = calendar.getEventById(eventId);
+                    if (existingEvent) {
+                        existingEvent.setProp('title', eventData.title);
+                        existingEvent.setStart(eventData.start);
+                        existingEvent.setProp('backgroundColor', eventData.backgroundColor);
+                        existingEvent.setProp('borderColor', eventData.borderColor);
+                        existingEvent.setExtendedProp('notes', eventData.extendedProps.notes);
+                        existingEvent.setExtendedProp('patientId', eventData.extendedProps.patientId);
+                    }
+                } else { // Estamos creando
+                    calendar.addEvent(eventData);
+                }
+
+                closeModal();
+            });
+
+            // --- LÓGICA DE PACIENTES ---
+            function setupPatientManagement() {
+                const patientFormTitle = document.getElementById('patient-form-title');
+                const patientForm = document.getElementById('patient-form');
+                const patientIdEditInput = document.getElementById('patient-id-edit');
+                const patientNameInput = document.getElementById('patient-name');
+                const patientColorInput = document.getElementById('patient-color');
+                const cancelPatientEditBtn = document.getElementById('cancel-patient-edit');
+
+                patientForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const patientId = patientIdEditInput.value;
+
+                    if (patientId) { // Editando paciente existente
+                        const patient = patients.find(p => p.id === patientId);
+                        if (patient) {
+                            patient.name = patientNameInput.value;
+                            patient.color = patientColorInput.value;
+                            updatePatientEventsInCalendar(patient);
+                        }
+                    } else { // Creando nuevo paciente
+                        const newPatient = {
+                            id: `patient-${Date.now()}`,
+                            name: patientNameInput.value,
+                            color: patientColorInput.value
+                        };
+                        patients.push(newPatient);
+                    }
+
+                    savePatients();
+                    renderPatientList();
+                    resetPatientForm();
+                });
+
+                cancelPatientEditBtn.addEventListener('click', resetPatientForm);
+
+                document.getElementById('patient-list').addEventListener('click', function (e) {
+                    handlePatientListActions(e);
+                });
+
+                loadPatients();
+                renderPatientList();
+            }
+
+            function savePatients() {
+                localStorage.setItem(PATIENTS_STORAGE_KEY, JSON.stringify(patients));
+            }
+
+            function loadPatients() {
+                const storedPatients = localStorage.getItem(PATIENTS_STORAGE_KEY);
+                patients = storedPatients ? JSON.parse(storedPatients) : [];
+            }
+
+            function renderPatientList() {
+                const listEl = document.getElementById('patient-list');
+                listEl.innerHTML = '';
+                patients.forEach(p => {
+                    const item = document.createElement('li');
+                    item.innerHTML = `
+                        <span style="width: 20px; height: 20px; background-color: ${p.color}; border-radius: 50%; display: inline-block;"></span>
+                        <span>${p.name}</span>
+                        <div class="patient-actions">
+                            <button class="edit-patient-btn" data-id="${p.id}">Editar</button>
+                            <button class="delete-patient-btn" data-id="${p.id}">Eliminar</button>
+                        </div>
+                    `;
+                    listEl.appendChild(item);
+                });
+            }
+
+            function handlePatientListActions(e) {
+                const patientId = e.target.dataset.id;
+                if (!patientId) return;
+
+                if (e.target.classList.contains('edit-patient-btn')) {
+                    const patient = patients.find(p => p.id === patientId);
+                    if (patient) {
+                        patientFormTitle.innerText = 'Editar Paciente';
+                        patientIdEditInput.value = patient.id;
+                        patientNameInput.value = patient.name;
+                        patientColorInput.value = patient.color;
+                        cancelPatientEditBtn.style.display = 'inline-block';
+                        patientNameInput.focus();
+                    }
+                }
+
+                if (e.target.classList.contains('delete-patient-btn')) {
+                    const eventsForPatient = calendar.getEvents().filter(ev => ev.extendedProps.patientId === patientId);
+                    if (eventsForPatient.length > 0) {
+                        alert('No se puede eliminar este paciente porque tiene citas asignadas. Por favor, elimine o reasigne las citas primero.');
+                        return;
+                    }
+
+                    if (confirm('¿Estás seguro de que quieres eliminar a este paciente?')) {
+                        patients = patients.filter(p => p.id !== patientId);
+                        savePatients();
+                        renderPatientList();
+                    }
+                }
+            }
+
+            function resetPatientForm() {
+                patientFormTitle.innerText = 'Añadir Nuevo Paciente';
+                document.getElementById('patient-form').reset();
+                patientIdEditInput.value = '';
+                cancelPatientEditBtn.style.display = 'none';
+            }
+
+            function updatePatientEventsInCalendar(patient) {
+                calendar.getEvents().forEach(event => {
+                    if (event.extendedProps.patientId === patient.id) {
+                        event.setProp('title', patient.name);
+                        event.setProp('backgroundColor', patient.color);
+                        event.setProp('borderColor', patient.color);
+                    }
+                });
+            }
+
+            function populatePatientSelect() {
+                patientSelect.innerHTML = '<option value="">-- Selecciona un paciente --</option>';
+                patients.forEach(p => {
+                    const option = document.createElement('option');
+                    option.value = p.id;
+                    option.innerText = p.name;
+                    patientSelect.appendChild(option);
+                });
+            }
+
+            function updateColorFromPatient() {
+                const selectedPatient = patients.find(p => p.id === patientSelect.value);
+                if (selectedPatient) {
+                    document.getElementById('event-color').value = selectedPatient.color;
+                }
+            }
+
+            patientSelect.addEventListener('change', updateColorFromPatient);
+
+            function setupNavigation() {
+                document.getElementById('show-calendar-btn').addEventListener('click', () => {
+                    document.getElementById('calendar-view').style.display = 'block';
+                    document.getElementById('patients-view').style.display = 'none';
+                });
+                document.getElementById('show-patients-btn').addEventListener('click', () => {
+                    document.getElementById('calendar-view').style.display = 'none';
+                    document.getElementById('patients-view').style.display = 'block';
+                });
+            }
+
+            // Inicializar la gestión de pacientes
+            setupPatientManagement();
+        });
+    </script>
+
+</body>
+
+</html>
