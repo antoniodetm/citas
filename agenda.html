@@ -158,16 +158,20 @@
             cursor: pointer;
         }
 
-        /* Estilos para los números de los días en negrita */
+        /* Estilos para los números de los días (sin negrita) */
         .fc-daygrid-day-number {
-            font-weight: bold !important;
+            font-weight: normal !important;
         }
 
-        /* Aumentar el tamaño de los números en las vistas mensual y anual */
+        /* Tamaño de los números en las vistas mensual y anual */
         .fc-dayGridMonth-view .fc-daygrid-day-number,
         .fc-multiMonthYear-view .fc-daygrid-day-number {
             font-size: 1.15em;
-            font-weight: bold !important;
+            font-weight: normal !important;
+        }
+
+        .fc-col-header-cell-cushion {
+            font-weight: normal !important;
         }
 
         /* --- ESTILOS PARA PANTALLAS GRANDES (Desktop) --- */
@@ -481,7 +485,10 @@
                 editable: true,
 
                 views: {
-                    dayGridMonth: {}
+                    dayGridMonth: {},
+                    dayGridWeek: {
+                        dayHeaderFormat: { weekday: 'short', day: 'numeric' }
+                    }
                 },
 
                 buttonText: {
