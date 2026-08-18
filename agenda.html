@@ -27,7 +27,7 @@
             max-width: 1100px;
             margin: 0 auto;
             background-color: white;
-            padding: 1rem;
+            padding: 0.35rem 1rem 1rem 1rem;
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
@@ -41,8 +41,8 @@
             justify-content: center;
             align-items: center;
             gap: 10px;
-            padding: 0.5rem 0;
-            margin-bottom: 0.5rem;
+            padding: 0.35rem 0;
+            margin-bottom: 0.25rem;
         }
 
         .main-nav button {
@@ -95,16 +95,53 @@
             color: #0056b3;
             font-size: 1.35rem;
             margin: 0;
-            padding: 0.35rem 0 0.75rem 0;
+            padding: 0.1rem 0 0.4rem 0;
         }
 
+        /* 3ª y 4ª Fila: Barra de herramientas de FullCalendar */
         .fc .fc-header-toolbar {
             position: sticky;
             top: var(--toolbar-top, 85px);
             z-index: 98;
             background-color: white;
-            padding: 0.5rem 0;
+            padding: 0.35rem 0 0.5rem 0;
             margin-bottom: 0.5rem !important;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 10px 14px;
+        }
+
+        /* 3ª Fila: Navegación de fecha y Título de la fecha actual */
+        .fc .fc-header-toolbar .fc-toolbar-chunk:nth-child(1) {
+            order: 1;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .fc .fc-header-toolbar .fc-toolbar-chunk:nth-child(2) {
+            order: 2;
+            display: flex;
+            align-items: center;
+        }
+
+        .fc .fc-toolbar-title {
+            font-size: 1.2rem !important;
+            font-weight: 700;
+            color: #0056b3;
+            text-transform: capitalize;
+            margin: 0;
+        }
+
+        /* 4ª Fila: Vistas (Año, Mes, Semana) */
+        .fc .fc-header-toolbar .fc-toolbar-chunk:nth-child(3) {
+            order: 3;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            gap: 6px;
         }
 
         /* Personalización de los botones de FullCalendar */
@@ -140,7 +177,7 @@
             }
 
             #calendar-container {
-                padding: 1rem 1.5rem;
+                padding: 0.4rem 1.5rem 1rem 1.5rem;
             }
 
             #calendar-container h1 {
@@ -429,16 +466,11 @@
             // Inicializamos el objeto FullCalendar
             const calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: isMobile ? 'dayGridWeek' : 'dayGridMonth',
-                headerToolbar: isMobile
-                    ? {
-                        left: 'prev,next',
-                        center: 'title',
-                        right: 'multiMonthYear,dayGridMonth,dayGridWeek'
-                    } : {
-                        left: 'prev,next today',
-                        center: 'title',
-                        right: 'multiMonthYear,dayGridMonth,dayGridWeek'
-                    },
+                headerToolbar: {
+                    left: 'prev,today,next',
+                    center: 'title',
+                    right: 'multiMonthYear,dayGridMonth,dayGridWeek'
+                },
 
                 locale: 'es',
                 initialDate: new Date(),
