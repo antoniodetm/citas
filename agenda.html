@@ -492,6 +492,181 @@
         #patient-list .patient-actions .delete-patient-btn:hover {
             background-color: #f8d7da;
         }
+
+        /* --- ESTILOS PARA LA VISTA DE PRÓXIMAS CITAS --- */
+        #upcoming-view {
+            display: none;
+            max-width: 850px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .upcoming-header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 1.25rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .upcoming-header h1 {
+            margin: 0;
+            color: #0056b3;
+            font-size: 1.5rem;
+        }
+
+        .upcoming-subtitle {
+            margin: 4px 0 0 0;
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+
+        .upcoming-search-wrap input {
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            font-size: 14px;
+            width: 220px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .upcoming-search-wrap input:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.15);
+        }
+
+        .upcoming-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .upcoming-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-left: 5px solid #007bff;
+            border-radius: 6px;
+            padding: 12px 16px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .upcoming-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.08);
+            border-color: #cbd5e1;
+        }
+
+        .upcoming-card-main {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .upcoming-datetime {
+            display: flex;
+            flex-direction: column;
+            min-width: 145px;
+        }
+
+        .upcoming-date-text {
+            font-size: 0.92rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .upcoming-time-text {
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+
+        .upcoming-details {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .upcoming-patient-name {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .upcoming-notes {
+            font-size: 0.85rem;
+            color: #64748b;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .upcoming-relative-badge {
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            border-radius: 12px;
+            background-color: #e9ecef;
+            color: #495057;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .upcoming-relative-badge.today {
+            background-color: #d1e7dd;
+            color: #0f5132;
+        }
+
+        .upcoming-relative-badge.tomorrow {
+            background-color: #cff4fc;
+            color: #055160;
+        }
+
+        .upcoming-actions {
+            margin-left: 12px;
+        }
+
+        .upcoming-actions button {
+            padding: 6px 12px;
+            font-size: 13px;
+            font-weight: 500;
+            border-radius: 4px;
+            border: 1px solid #ced4da;
+            background-color: #f8f9fa;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .upcoming-actions button:hover {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+
+        .upcoming-empty {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #6c757d;
+        }
+
+        .upcoming-empty-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
     </style>
 </head>
 
@@ -499,6 +674,7 @@
 
     <div class="main-nav">
         <button id="show-calendar-btn" class="active">Agenda</button>
+        <button id="show-upcoming-btn">Próximos</button>
         <button id="show-patients-btn">Pacientes</button>
         <span id="db-status" class="db-status">Conectando a Firebase...</span>
     </div>
@@ -509,6 +685,19 @@
             <!-- El calendario se renderizará aquí -->
             <div id="calendar"></div>
         </div>
+    </div>
+
+    <div id="upcoming-view">
+        <div class="upcoming-header">
+            <div>
+                <h1>Próximas Citas</h1>
+                <p class="upcoming-subtitle" id="upcoming-count">0 citas próximas</p>
+            </div>
+            <div class="upcoming-search-wrap">
+                <input type="text" id="upcoming-search" placeholder="Buscar paciente o nota...">
+            </div>
+        </div>
+        <div id="upcoming-list" class="upcoming-list"></div>
     </div>
 
     <div id="patients-view">
@@ -588,6 +777,7 @@
             const statusEl = document.getElementById('db-status');
             const calendarEl = document.getElementById('calendar');
             let patients = [];
+            let allCitas = [];
 
             // Actualizar indicador de estado
             function setStatus(text, className) {
@@ -740,18 +930,30 @@
             // 1. Escuchar citas en tiempo real desde Firestore
             db.collection('citas').onSnapshot((snapshot) => {
                 const events = [];
+                allCitas = [];
                 snapshot.forEach((doc) => {
                     const data = doc.data();
-                    events.push({
+                    const cita = {
                         id: doc.id,
                         title: data.title || 'Cita',
                         start: data.start,
                         end: data.end || null,
                         backgroundColor: data.backgroundColor || '#007bff',
                         borderColor: data.borderColor || '#007bff',
+                        notes: data.notes || '',
+                        patientId: data.patientId || ''
+                    };
+                    allCitas.push(cita);
+                    events.push({
+                        id: cita.id,
+                        title: cita.title,
+                        start: cita.start,
+                        end: cita.end,
+                        backgroundColor: cita.backgroundColor,
+                        borderColor: cita.borderColor,
                         extendedProps: {
-                            notes: data.notes || '',
-                            patientId: data.patientId || ''
+                            notes: cita.notes,
+                            patientId: cita.patientId
                         }
                     });
                 });
@@ -760,6 +962,9 @@
                 calendar.removeAllEvents();
                 calendar.addEventSource(events);
                 setStatus('🟢 Firebase Conectado', 'connected');
+
+                // Renderizar lista de próximos
+                renderUpcomingAppointments();
             }, (error) => {
                 console.error("Error al sincronizar citas desde Firebase:", error);
                 setStatus('🔴 Error de conexión', 'error');
@@ -824,6 +1029,14 @@
 
             const formatTime = (date) => date ? new Date(date).toTimeString().slice(0, 5) : '';
 
+            function formatDateInputValue(date) {
+                const d = new Date(date);
+                const year = d.getFullYear();
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            }
+
             function openModal(date, event = null) {
                 eventForm.reset();
                 populatePatientSelect();
@@ -831,11 +1044,11 @@
                 if (event) { // Modo Edición
                     modalTitle.innerText = 'Editar Cita';
                     eventIdInput.value = event.id;
-                    patientSelect.value = event.extendedProps.patientId || '';
-                    eventDateInput.value = event.start.toISOString().slice(0, 10);
+                    patientSelect.value = (event.extendedProps && event.extendedProps.patientId) || event.patientId || '';
+                    eventDateInput.value = formatDateInputValue(event.start);
                     document.getElementById('event-start-time').value = formatTime(event.start);
                     document.getElementById('event-color').value = event.backgroundColor || '#007bff';
-                    document.getElementById('event-notes').value = event.extendedProps.notes || '';
+                    document.getElementById('event-notes').value = (event.extendedProps && event.extendedProps.notes) || event.notes || '';
                     deleteButton.style.display = 'block';
                 } else { // Modo Creación
                     modalTitle.innerText = 'Añadir Nueva Cita';
@@ -917,6 +1130,127 @@
                     alert("Error al guardar la cita en Firebase: " + error.message);
                 }
             });
+
+            // --- LÓGICA DE PRÓXIMAS CITAS ---
+            const upcomingSearchInput = document.getElementById('upcoming-search');
+            if (upcomingSearchInput) {
+                upcomingSearchInput.addEventListener('input', renderUpcomingAppointments);
+            }
+
+            function renderUpcomingAppointments() {
+                const listEl = document.getElementById('upcoming-list');
+                const countEl = document.getElementById('upcoming-count');
+                const searchVal = (document.getElementById('upcoming-search')?.value || '').toLowerCase().trim();
+
+                if (!listEl) return;
+
+                const now = new Date();
+                const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                const todayStart = todayMidnight.getTime();
+
+                // Filtrar citas desde hoy en adelante
+                let upcoming = allCitas.filter(c => {
+                    if (!c.start) return false;
+                    const startDate = new Date(c.start);
+                    return startDate.getTime() >= todayStart;
+                });
+
+                // Ordenar cronológicamente (más cercana primero)
+                upcoming.sort((a, b) => new Date(a.start) - new Date(b.start));
+
+                // Filtrar por búsqueda si hay texto ingresado
+                if (searchVal) {
+                    upcoming = upcoming.filter(c =>
+                        (c.title || '').toLowerCase().includes(searchVal) ||
+                        (c.notes || '').toLowerCase().includes(searchVal)
+                    );
+                }
+
+                if (countEl) {
+                    countEl.innerText = `${upcoming.length} cita${upcoming.length === 1 ? '' : 's'} próxima${upcoming.length === 1 ? '' : 's'}`;
+                }
+
+                listEl.innerHTML = '';
+
+                if (upcoming.length === 0) {
+                    listEl.innerHTML = `
+                        <div class="upcoming-empty">
+                            <div class="upcoming-empty-icon">📅</div>
+                            <p>No hay citas próximas ${searchVal ? 'que coincidan con la búsqueda' : 'programadas'}.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                upcoming.forEach(c => {
+                    const startDate = new Date(c.start);
+                    const apptMidnight = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+                    const diffTime = apptMidnight.getTime() - todayMidnight.getTime();
+                    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+                    let relativeText = '';
+                    let badgeClass = '';
+                    if (diffDays === 0) {
+                        relativeText = 'Hoy';
+                        badgeClass = 'today';
+                    } else if (diffDays === 1) {
+                        relativeText = 'Mañana';
+                        badgeClass = 'tomorrow';
+                    } else if (diffDays > 1 && diffDays < 7) {
+                        relativeText = `En ${diffDays} días`;
+                    } else if (diffDays >= 7 && diffDays < 30) {
+                        const weeks = Math.floor(diffDays / 7);
+                        relativeText = `En ${weeks} sem.`;
+                    } else if (diffDays >= 30) {
+                        const months = Math.floor(diffDays / 30);
+                        relativeText = `En ${months} mes${months > 1 ? 'es' : ''}`;
+                    }
+
+                    const dateStr = startDate.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+                    const timeStr = startDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false });
+                    const color = c.backgroundColor || '#007bff';
+
+                    const card = document.createElement('div');
+                    card.className = 'upcoming-card';
+                    card.style.borderLeftColor = color;
+                    card.innerHTML = `
+                        <div class="upcoming-card-main">
+                            <div class="upcoming-datetime">
+                                <span class="upcoming-date-text" style="text-transform: capitalize;">${dateStr}</span>
+                                <span class="upcoming-time-text">🕒 ${timeStr} h</span>
+                            </div>
+                            <div class="upcoming-details">
+                                <div class="upcoming-patient-name">${c.title}</div>
+                                ${c.notes ? `<div class="upcoming-notes" title="${c.notes}">${c.notes}</div>` : ''}
+                            </div>
+                            ${relativeText ? `<span class="upcoming-relative-badge ${badgeClass}">${relativeText}</span>` : ''}
+                        </div>
+                        <div class="upcoming-actions">
+                            <button type="button" class="upcoming-edit-btn" data-id="${c.id}">Editar</button>
+                        </div>
+                    `;
+
+                    card.addEventListener('click', () => {
+                        const fcEvent = calendar.getEventById(c.id);
+                        if (fcEvent) {
+                            openModal(null, fcEvent);
+                        } else {
+                            openModal(null, {
+                                id: c.id,
+                                title: c.title,
+                                start: startDate,
+                                backgroundColor: c.backgroundColor,
+                                extendedProps: {
+                                    notes: c.notes,
+                                    patientId: c.patientId
+                                }
+                            });
+                        }
+                    });
+
+                    listEl.appendChild(card);
+                });
+            }
 
             // --- LÓGICA DE PACIENTES CON FIREBASE ---
             function setupPatientManagement() {
@@ -1065,25 +1399,32 @@
 
             function setupNavigation() {
                 const calBtn = document.getElementById('show-calendar-btn');
+                const upcBtn = document.getElementById('show-upcoming-btn');
                 const patBtn = document.getElementById('show-patients-btn');
                 const calView = document.getElementById('calendar-view');
+                const upcView = document.getElementById('upcoming-view');
                 const patView = document.getElementById('patients-view');
 
-                calBtn.addEventListener('click', () => {
-                    calView.style.display = 'block';
-                    patView.style.display = 'none';
-                    calBtn.classList.add('active');
-                    patBtn.classList.remove('active');
-                    calendar.render();
-                    updateStickyHeaderOffsets();
-                });
+                function setActiveTab(tab) {
+                    calView.style.display = tab === 'calendar' ? 'block' : 'none';
+                    upcView.style.display = tab === 'upcoming' ? 'block' : 'none';
+                    patView.style.display = tab === 'patients' ? 'block' : 'none';
 
-                patBtn.addEventListener('click', () => {
-                    calView.style.display = 'none';
-                    patView.style.display = 'block';
-                    patBtn.classList.add('active');
-                    calBtn.classList.remove('active');
-                });
+                    calBtn.classList.toggle('active', tab === 'calendar');
+                    upcBtn.classList.toggle('active', tab === 'upcoming');
+                    patBtn.classList.toggle('active', tab === 'patients');
+
+                    if (tab === 'calendar') {
+                        calendar.render();
+                        updateStickyHeaderOffsets();
+                    } else if (tab === 'upcoming') {
+                        renderUpcomingAppointments();
+                    }
+                }
+
+                calBtn.addEventListener('click', () => setActiveTab('calendar'));
+                upcBtn.addEventListener('click', () => setActiveTab('upcoming'));
+                patBtn.addEventListener('click', () => setActiveTab('patients'));
             }
 
             // Inicializar la gestión de pacientes
