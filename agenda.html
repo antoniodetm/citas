@@ -416,6 +416,27 @@
             background-color: #c82333;
         }
 
+        #google-calendar-button {
+            background-color: #ffffff;
+            color: #3c4043;
+            border: 1px solid #dadce0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 5px;
+        }
+
+        #google-calendar-button:hover {
+            background-color: #f1f3f4;
+            border-color: #d2d4d7;
+        }
+
+        #google-calendar-button img {
+            width: 18px;
+            height: 18px;
+        }
+
         .modal-buttons {
             display: flex;
             gap: 10px;
@@ -711,7 +732,8 @@
             <input type="color" id="patient-color" value="#3788d8">
             <div class="modal-buttons">
                 <button type="submit" id="patient-submit-btn">Guardar</button>
-                <button type="button" id="cancel-patient-edit" style="display: none; background-color: #6c757d;">Cancelar</button>
+                <button type="button" id="cancel-patient-edit"
+                    style="display: none; background-color: #6c757d;">Cancelar</button>
             </div>
         </form>
         <hr style="margin: 1.5rem 0; border: 0; border-top: 1px solid #dee2e6;">
@@ -744,6 +766,11 @@
                     <button type="submit" id="event-submit-btn">Guardar Cambios</button>
                     <button type="button" id="delete-button">Eliminar Cita</button>
                 </div>
+                <button type="button" id="google-calendar-button">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/a/a5/Google_Calendar_icon_%282020%29.svg"
+                        alt="Google Calendar">
+                    Añadir a Google Calendar
+                </button>
             </form>
         </div>
     </div>
@@ -1025,6 +1052,7 @@
             const eventIdInput = document.getElementById('event-id');
             const eventDateInput = document.getElementById('event-date');
             const deleteButton = document.getElementById('delete-button');
+            const googleCalendarButton = document.getElementById('google-calendar-button');
             const patientSelect = document.getElementById('event-patient-select');
 
             const formatTime = (date) => date ? new Date(date).toTimeString().slice(0, 5) : '';
@@ -1087,6 +1115,41 @@
                         alert("Error al eliminar la cita: " + error.message);
                     }
                 }
+            };
+
+            // Abrir cita en Google Calendar
+            googleCalendarButton.onclick = function () {
+                const patientName = patientSelect.options[patientSelect.selectedIndex]?.text || 'Cita Médica';
+                const date = eventDateInput.value;
+                const startTime = document.getElementById('event-start-time').value;
+                const notes = document.getElementById('event-notes').value;
+
+                if (!date || !startTime || patientSelect.value === "") {
+                    alert('Por favor, selecciona un paciente, fecha y hora primero.');
+                    return;
+                }
+
+                // Generar fechas en formato YYYYMMDDTHHmmSS (local)
+                const startStr = `${date.replace(/-/g, '')}T${startTime.replace(/:/g, '')}00`;
+
+                // Calculamos el fin (por defecto 30 min después)
+                const startDate = new Date(`${date}T${startTime}`);
+                if (isNaN(startDate.getTime())) {
+                    alert('Fecha u hora inválida.');
+                    return;
+                }
+                const endDate = new Date(startDate.getTime() + 30 * 60000);
+
+                const endYear = endDate.getFullYear();
+                const endMonth = String(endDate.getMonth() + 1).padStart(2, '0');
+                const endDay = String(endDate.getDate()).padStart(2, '0');
+                const endHours = String(endDate.getHours()).padStart(2, '0');
+                const endMinutes = String(endDate.getMinutes()).padStart(2, '0');
+                const endStr = `${endYear}${endMonth}${endDay}T${endHours}${endMinutes}00`;
+
+                const url = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent('Cita: ' + patientName)}&dates=${startStr}/${endStr}&details=${encodeURIComponent(notes)}&sf=true&output=xml`;
+
+                window.open(url, '_blank');
             };
 
             // Guardar / Editar Cita en Firestore

@@ -1,0 +1,37 @@
+import { GoogleGenAI } from '@google/genai';
+import readline from 'readline';
+
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
+const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+});
+
+// Iniciamos la sesión de chat para mantener el contexto del diálogo
+const chat = ai.chats.create({
+    model: 'gemini-3.6-flash',
+});
+
+console.log('--- Chat Activo con Gemini (AI Studio) ---');
+console.log('Escribe "salir" para terminar la conversación.\n');
+
+function preguntar() {
+    rl.question('Tú: ', async (prompt) => {
+        if (prompt.trim().toLowerCase() === 'salir') {
+            rl.close();
+            return;
+        }
+
+        try {
+            const response = await chat.sendMessage({ message: prompt });
+            console.log(`\nGemini: ${response.text}\n`);
+        } catch (error) {
+            console.error('\nError:', error.message, '\n');
+        }
+
+        preguntar();
+    });
+}
+
+preguntar();
